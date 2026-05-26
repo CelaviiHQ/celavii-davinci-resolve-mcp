@@ -420,3 +420,209 @@ def cutmaster_set_project_setting(key: str, value: str) -> str:
     _, project, _ = _boilerplate()
     result = project.SetSetting(key, value)
     return f"Set {key} = {value}." if result else f"Failed to set {key}. Check key name and value."
+
+
+# ---------------------------------------------------------------------------
+# v5 · Project-level setup helpers (enum-normalising wrappers over SetSetting)
+# ---------------------------------------------------------------------------
+#
+# Every wrapper below is a thin call to ``project.SetSetting(key, value)`` with
+# (a) an LLM-friendly enum normalised to Resolve's exact string, and (b) the
+# Resolve setting keys grouped by intent so an agent doesn't need to know the
+# raw key names. Verified live on Resolve 21.0.0b.20 (see api_verification.md).
+
+_COLOR_SCIENCE_MODES = {
+    "davinciYRGB": "davinciYRGB",
+    "yrgb": "davinciYRGB",
+    "davinciYRGBColorManaged": "davinciYRGBColorManaged",
+    "managed": "davinciYRGBColorManaged",
+    "acescct": "acescct",
+    "acescc": "acescc",
+}
+
+_PROXY_MODES = {
+    "off": "0",
+    "0": "0",
+    "prefer_camera_originals": "1",
+    "1": "1",
+    "prefer_proxies": "2",
+    "2": "2",
+}
+
+
+def _normalise_enum(value: str, table: dict[str, str], field: str) -> str:
+    """Look up ``value`` (case-insensitive) in ``table``; raise on miss."""
+    key = (value or "").strip().lower()
+    for k, v in table.items():
+        if k.lower() == key:
+            return v
+    raise ValueError(f"Invalid {field} '{value}'. Allowed: {sorted(set(table.values()))}.")
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_color_science_mode(mode: str) -> str:
+    """Set the project's color science mode.
+
+    Args:
+        mode: One of ``davinciYRGB`` / ``davinciYRGBColorManaged`` / ``acescct``
+            / ``acescc``. Aliases ``yrgb`` (→ ``davinciYRGB``) and ``managed``
+            (→ ``davinciYRGBColorManaged``) accepted for convenience.
+
+    Some color-science changes only take effect after the project reloads.
+    """
+    _, project, _ = _boilerplate()
+    canonical = _normalise_enum(mode, _COLOR_SCIENCE_MODES, "color science mode")
+    if not project.SetSetting("colorScienceMode", canonical):
+        return f"Failed to set colorScienceMode = {canonical}. Resolve refused the value."
+    return f"Set colorScienceMode = {canonical}."
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_color_space(
+    input_space: str = "",
+    timeline_space: str = "",
+    output_space: str = "",
+    input_gamma: str = "",
+    timeline_gamma: str = "",
+    output_gamma: str = "",
+) -> str:
+    """Set per-project input / timeline / output color spaces (and gammas).
+
+    Each argument is optional — pass only the ones you want to change. Values
+    are the exact Resolve labels (e.g. ``Rec.709 (Scene)``, ``Rec.2020``,
+    ``DaVinci Wide Gamut``, ``ACES AP1``). Gamma examples: ``Rec.709``,
+    ``Gamma 2.4``, ``Linear``.
+    """
+    _, project, _ = _boilerplate()
+    pairs = [
+        ("colorSpaceInput", input_space),
+        ("colorSpaceTimeline", timeline_space),
+        ("colorSpaceOutput", output_space),
+        ("colorSpaceInputGamma", input_gamma),
+        ("colorSpaceTimelineGamma", timeline_gamma),
+        ("colorSpaceOutputGamma", output_gamma),
+    ]
+    applied: list[str] = []
+    failed: list[str] = []
+    for key, val in pairs:
+        if not val:
+            continue
+        if project.SetSetting(key, val):
+            applied.append(f"{key}={val}")
+        else:
+            failed.append(f"{key}={val}")
+    if not applied and not failed:
+        return "No color-space fields passed — nothing changed."
+    return json.dumps({"applied": applied, "failed": failed}, indent=2)
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_timeline_format(
+    width: int,
+    height: int,
+    fps: float,
+    pixel_aspect: str = "square",
+) -> str:
+    """Set the project-level timeline format defaults.
+
+    Args:
+        width: Pixels (e.g. 1920, 1080, 3840).
+        height: Pixels (e.g. 1080, 1920, 2160).
+        fps: Frame rate (e.g. 24, 25, 29.97, 30, 60).
+        pixel_aspect: One of ``square``, ``16:9_anamorphic``, ``4:3_anamorphic``,
+            ``cinemascope``. Defaults to ``square``.
+
+    Affects future timeline creates. Existing timelines that explicitly set
+    "Use Project Settings = Off" retain their own resolution.
+    """
+    _, project, _ = _boilerplate()
+    pa_map = {
+        "square": "Square",
+        "16:9_anamorphic": "16:9 Anamorphic",
+        "4:3_anamorphic": "4:3 Anamorphic",
+        "cinemascope": "Cinemascope",
+    }
+    pa = pa_map.get(pixel_aspect.lower())
+    if pa is None:
+        raise ValueError(f"Invalid pixel_aspect '{pixel_aspect}'. Allowed: {sorted(pa_map)}.")
+    results = {
+        "timelineResolutionWidth": project.SetSetting("timelineResolutionWidth", str(width)),
+        "timelineResolutionHeight": project.SetSetting("timelineResolutionHeight", str(height)),
+        "timelineFrameRate": project.SetSetting("timelineFrameRate", str(fps)),
+        "timelinePixelAspectRatio": project.SetSetting("timelinePixelAspectRatio", pa),
+    }
+    return json.dumps(results, indent=2)
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_proxy_mode(mode: str) -> str:
+    """Toggle the project's proxy-media playback mode.
+
+    Args:
+        mode: One of ``off``, ``prefer_camera_originals``, ``prefer_proxies``.
+            Aliases ``0`` / ``1`` / ``2`` accepted for compatibility with raw
+            Resolve setting values.
+    """
+    _, project, _ = _boilerplate()
+    canonical = _normalise_enum(mode, _PROXY_MODES, "proxy mode")
+    if not project.SetSetting("perfProxyMediaMode", canonical):
+        return f"Failed to set perfProxyMediaMode = {canonical}."
+    return f"Set perfProxyMediaMode = {canonical}."
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_optimized_media_mode(enabled: bool) -> str:
+    """Enable or disable optimized-media playback for the project.
+
+    When enabled, Resolve plays back from optimized media when available and
+    falls back to source otherwise. Optimized media is generated separately
+    via the Media page; this setter only flips the playback-preference.
+    """
+    _, project, _ = _boilerplate()
+    value = "1" if enabled else "0"
+    if not project.SetSetting("perfOptimizedMediaMode", value):
+        return f"Failed to set perfOptimizedMediaMode = {value}."
+    return f"Set perfOptimizedMediaMode = {value} ({'enabled' if enabled else 'disabled'})."
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_cache_mode(mode: str) -> str:
+    """Set the project's render-cache mode.
+
+    Args:
+        mode: One of ``none``, ``smart``, ``user``. ``smart`` lets Resolve
+            decide what to cache; ``user`` caches only explicitly-flagged
+            clips/sections; ``none`` disables the render cache.
+    """
+    _, project, _ = _boilerplate()
+    cache_map = {"none": "0", "smart": "1", "user": "2"}
+    key = mode.strip().lower()
+    if key not in cache_map:
+        raise ValueError(f"Invalid cache mode '{mode}'. Allowed: {sorted(cache_map)}.")
+    if not project.SetSetting("videoCacheMode", cache_map[key]):
+        return f"Failed to set videoCacheMode = {cache_map[key]}."
+    return f"Set videoCacheMode = {cache_map[key]} ({key})."
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_set_superscale_settings(scale: int) -> str:
+    """Set the project's default SuperScale upscaling factor.
+
+    Args:
+        scale: ``1`` (off, native) / ``2`` (2x) / ``3`` (3x) / ``4`` (4x).
+            Applied to clips whose SuperScale property is set in the
+            inspector; this setter only changes the project default.
+    """
+    _, project, _ = _boilerplate()
+    if scale not in (1, 2, 3, 4):
+        raise ValueError(f"Invalid superScale '{scale}'. Allowed: 1, 2, 3, 4.")
+    if not project.SetSetting("superScale", str(scale)):
+        return f"Failed to set superScale = {scale}."
+    return f"Set superScale = {scale}."

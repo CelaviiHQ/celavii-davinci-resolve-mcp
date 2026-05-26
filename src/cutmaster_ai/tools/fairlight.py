@@ -1,7 +1,9 @@
-"""Fairlight audio tools — audio insertion, voice isolation, track info."""
+"""Fairlight audio tools — audio insertion, voice isolation, track info, preset apply."""
+
+import json
 
 from ..config import mcp
-from ..errors import safe_resolve_call
+from ..errors import _requires_method, safe_resolve_call
 from ..resolve import _boilerplate, _require_studio, get_resolve
 
 
@@ -57,8 +59,6 @@ def cutmaster_voice_isolation(
 @safe_resolve_call
 def cutmaster_get_audio_track_info() -> str:
     """Get information about all audio tracks in the current timeline."""
-    import json
-
     _, project, _ = _boilerplate()
     tl = project.GetCurrentTimeline()
     if not tl:
@@ -102,3 +102,51 @@ def cutmaster_set_audio_track_volume(
     if result:
         return f"Audio track {track_index} volume set to {volume}."
     return "Failed to set volume. Track volume may need to be set via Fairlight page."
+
+
+# ---------------------------------------------------------------------------
+# v5 · Fairlight mix presets (Resolve 20.2.2+)
+# ---------------------------------------------------------------------------
+#
+# Verified on Resolve 21.0.0b.20 Studio (api_verification.md). The two methods
+# live on different objects:
+#   - resolve.GetFairlightPresets()                          (Resolve app)
+#   - project.ApplyFairlightPresetToCurrentTimeline(name)    (Project)
+# Both gated via ``_requires_method`` so older Resolves get a clean error
+# string instead of Resolve's misleading ``'NoneType' object is not callable``.
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_get_fairlight_presets() -> str:
+    """List installed Fairlight audio mix presets (Resolve ≥20.2.2).
+
+    Returns the list of preset names available on this Resolve install.
+    Use the returned names with ``cutmaster_apply_fairlight_preset``.
+    """
+    resolve, _, _ = _boilerplate()
+    _requires_method(resolve, "GetFairlightPresets", "20.2.2")
+    presets = resolve.GetFairlightPresets() or []
+    return json.dumps({"presets": list(presets), "count": len(presets)}, indent=2)
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_apply_fairlight_preset(preset_name: str) -> str:
+    """Apply a Fairlight mix preset to the current timeline (Resolve ≥20.2.2).
+
+    Args:
+        preset_name: Name of an installed preset (case-sensitive). List
+            available names with ``cutmaster_get_fairlight_presets``.
+    """
+    if not preset_name.strip():
+        raise ValueError("preset_name is required.")
+    _, project, _ = _boilerplate()
+    _requires_method(project, "ApplyFairlightPresetToCurrentTimeline", "20.2.2")
+    ok = project.ApplyFairlightPresetToCurrentTimeline(preset_name)
+    if not ok:
+        return (
+            f"Failed to apply Fairlight preset '{preset_name}'. Check the name "
+            "(case-sensitive) — list available presets with cutmaster_get_fairlight_presets."
+        )
+    return f"Applied Fairlight preset '{preset_name}' to current timeline."

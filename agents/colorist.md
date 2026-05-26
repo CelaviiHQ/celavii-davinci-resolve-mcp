@@ -41,6 +41,18 @@ tools:
   - mcp__cutmaster-ai__cutmaster_batch_apply_lut
   - mcp__cutmaster-ai__cutmaster_copy_grade_to_all
   - mcp__cutmaster-ai__cutmaster_refresh_lut_list
+  - mcp__cutmaster-ai__cutmaster_reset_clip_grade
+  - mcp__cutmaster-ai__cutmaster_set_color_science_mode
+  - mcp__cutmaster-ai__cutmaster_set_color_space
+  - mcp__cutmaster-ai__cutmaster_list_dctls
+  - mcp__cutmaster-ai__cutmaster_read_dctl
+  - mcp__cutmaster-ai__cutmaster_validate_dctl_source
+  - mcp__cutmaster-ai__cutmaster_list_dctl_templates
+  - mcp__cutmaster-ai__cutmaster_render_dctl_template
+  - mcp__cutmaster-ai__cutmaster_install_dctl
+  - mcp__cutmaster-ai__cutmaster_remove_dctl
+  - mcp__cutmaster-ai__cutmaster_get_dctl_search_paths
+  - mcp__cutmaster-ai__cutmaster_apply_dctl_to_node
 ---
 
 # Colorist Agent

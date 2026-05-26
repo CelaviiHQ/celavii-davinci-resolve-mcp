@@ -16,6 +16,10 @@ tools:
   - mcp__cutmaster-ai__cutmaster_voice_isolation
   - mcp__cutmaster-ai__cutmaster_get_audio_track_info
   - mcp__cutmaster-ai__cutmaster_set_audio_track_volume
+  - mcp__cutmaster-ai__cutmaster_get_fairlight_presets
+  - mcp__cutmaster-ai__cutmaster_apply_fairlight_preset
+  - mcp__cutmaster-ai__cutmaster_transcribe_clip
+  - mcp__cutmaster-ai__cutmaster_clear_clip_transcription
   - mcp__cutmaster-ai__cutmaster_get_playhead_position
   - mcp__cutmaster-ai__cutmaster_set_playhead_position
   - mcp__cutmaster-ai__cutmaster_add_timeline_marker

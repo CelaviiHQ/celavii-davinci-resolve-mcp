@@ -1,0 +1,25 @@
+// False-colour DCTL — maps luminance bands to flat exposure-check colours.
+// Use as an exposure-zone overlay node. Toggle in/out via the Off/On
+// switch in the inspector.
+// CutMaster AI · v5 Wave 3 · template id: false_color
+
+DEFINE_UI_PARAMS(enabled, Enabled, DCTLUI_CHECK_BOX, 1)
+
+__DEVICE__ float3 false_band(float lum)
+{
+    if (lum < 0.02f) return make_float3(0.0f, 0.0f, 0.3f);    // dark blue   = crushed shadows
+    if (lum < 0.20f) return make_float3(0.0f, 0.4f, 1.0f);    // blue        = deep shadow
+    if (lum < 0.42f) return make_float3(0.6f, 0.6f, 0.6f);    // grey        = mid
+    if (lum < 0.58f) return make_float3(1.0f, 0.6f, 0.0f);    // orange      = skin / mid-high
+    if (lum < 0.78f) return make_float3(1.0f, 1.0f, 0.0f);    // yellow      = bright skin / mid-highlight
+    if (lum < 0.95f) return make_float3(1.0f, 0.4f, 0.4f);    // pink        = highlight
+    return make_float3(1.0f, 1.0f, 1.0f);                     // white       = clipped
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+    if (enabled == 0)
+        return make_float3(p_R, p_G, p_B);
+    float lum = 0.2126f * p_R + 0.7152f * p_G + 0.0722f * p_B;
+    return false_band(lum);
+}

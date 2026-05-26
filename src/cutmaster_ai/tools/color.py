@@ -353,3 +353,55 @@ def cutmaster_apply_grade_from_drx(
         return "No valid target items."
     result = tl.ApplyGradeFromDRX(drx_path, grade_index, targets)
     return f"Grade applied to {len(targets)} item(s)." if result else "Failed to apply grade."
+
+
+# ---------------------------------------------------------------------------
+# v5 · Per-clip grade reset (Graph.ResetAllGrades — README line 537)
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool
+@safe_resolve_call
+def cutmaster_reset_clip_grade(
+    track_type: str = "video",
+    track_index: int = 1,
+    item_index: int = 0,
+    layer_index: int = 1,
+) -> str:
+    """Reset every node's grade on a single timeline-item's color graph.
+
+    Snapshots the project *before* mutating (rollback via existing snapshot
+    tooling). Calls ``item.GetNodeGraph(layer_index).ResetAllGrades()``
+    underneath — the canonical Resolve scripting path (verified live on
+    Resolve 21.0.0b.20; see api_verification.md).
+
+    Args:
+        track_type: ``video`` / ``audio`` / ``subtitle`` — usually ``video``.
+        track_index: 1-based track index.
+        item_index: 0-based item index within the track.
+        layer_index: 1-based node-stack layer (Resolve defaults to 1). Range
+            is 1..``project.GetSetting("nodeStackLayers")``.
+
+    Destructive — every node's grade values are reset. Node count and labels
+    are preserved; only the grade *contents* are wiped.
+    """
+    from ..cutmaster.core.snapshot import snapshot_project  # local import — keeps cold-start light
+
+    resolve, project, _ = _boilerplate()
+    _, item = _get_timeline_item(project, track_type, track_index, item_index)
+    snap = snapshot_project(resolve, project, label="pre_reset_clip_grade")
+    graph = item.GetNodeGraph(layer_index)
+    if graph is None:
+        return f"No node graph on item at layer {layer_index}."
+    ok = graph.ResetAllGrades()
+    if not ok:
+        return "Resolve refused to reset grades on this graph."
+    return json.dumps(
+        {
+            "reset": True,
+            "item": item.GetName(),
+            "layer_index": layer_index,
+            "snapshot": snap.get("path"),
+        },
+        indent=2,
+    )

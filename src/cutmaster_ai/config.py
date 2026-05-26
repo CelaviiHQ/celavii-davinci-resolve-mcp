@@ -2,11 +2,18 @@
 
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
 
+# Load the repo-root .env regardless of cwd so MCP clients (Claude Code /
+# Desktop / Cursor) that spawn the server from a foreign working directory
+# still pick up API keys. cwd-based `.env` still wins via the default call.
 load_dotenv()
+_REPO_ENV = Path(__file__).resolve().parents[2] / ".env"
+if _REPO_ENV.is_file():
+    load_dotenv(_REPO_ENV, override=False)
 
 log = logging.getLogger("cutmaster-ai")
 

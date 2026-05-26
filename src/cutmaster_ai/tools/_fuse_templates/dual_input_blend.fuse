@@ -1,0 +1,53 @@
+--[[
+Dual-input image blend — two inputs (Background + Foreground) and a
+blend amount. Demonstrates multi-input setup. Replace the lerp in
+`Process()` with your blend math.
+
+CutMaster AI · v5 Wave 3 · template id: dual_input_blend
+]]
+
+FuRegisterClass("{{CLASS_ID}}", CT_Tool, {
+    REGS_Category    = "{{CATEGORY}}",
+    REGS_OpIconString = "{{CLASS_ID}}",
+    REGS_OpDescription = "{{DESCRIPTION}}",
+    REGS_Name        = "{{NAME}}",
+})
+
+function Create()
+    self.Background = self:AddInput("Background", "Background", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+    self.Foreground = self:AddInput("Foreground", "Foreground", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 2,
+    })
+    self.Blend = self:AddInput("Blend", "Blend", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_MinScale = 0.0,
+        INP_MaxScale = 1.0,
+        INP_Default  = 0.5,
+    })
+    self.Output = self:AddOutput("Output", "Output", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+end
+
+function Process(req)
+    local bg = self.Background:GetValue(req)
+    local fg = self.Foreground:GetValue(req)
+    local k  = self.Blend:GetValue(req).Value
+    local out = Image({IMG_Like = bg})
+    out:ProcessPixels(0, 0, bg.Width, bg.Height, bg,
+        function(p, x, y)
+            local pf = fg:GetPixel(x, y) or p
+            p.R = p.R * (1 - k) + pf.R * k
+            p.G = p.G * (1 - k) + pf.G * k
+            p.B = p.B * (1 - k) + pf.B * k
+            return p
+        end
+    )
+    self.Output:Set(req, out)
+end

@@ -1,0 +1,21 @@
+// Single-axis tone curve DCTL — drives a smooth ease-in-out curve on
+// luminance only via a single "Strength" slider. Replace with a real
+// curve evaluator if you need control points.
+// CutMaster AI · v5 Wave 3 · template id: single_axis_curve
+
+DEFINE_UI_PARAMS(strength, Strength, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 2.0, 0.001)
+
+__DEVICE__ float smoothstep01(float x)
+{
+    if (x < 0.0f) return 0.0f;
+    if (x > 1.0f) return 1.0f;
+    return x * x * (3.0f - 2.0f * x);
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+    float lum = 0.2126f * p_R + 0.7152f * p_G + 0.0722f * p_B;
+    float curved = smoothstep01(lum) * strength;
+    float scale = (lum > 1e-6f) ? curved / lum : 1.0f;
+    return make_float3(p_R * scale, p_G * scale, p_B * scale);
+}

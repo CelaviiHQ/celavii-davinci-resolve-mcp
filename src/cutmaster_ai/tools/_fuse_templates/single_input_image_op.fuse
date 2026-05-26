@@ -1,0 +1,50 @@
+--[[
+Single-input image operator — one image input + one float slider.
+Demonstrates parameterised UI control + per-pixel processing via
+PixelPtrMap. Edit the body of `Process()` for your actual maths.
+
+CutMaster AI · v5 Wave 3 · template id: single_input_image_op
+]]
+
+FuRegisterClass("{{CLASS_ID}}", CT_Tool, {
+    REGS_Category    = "{{CATEGORY}}",
+    REGS_OpIconString = "{{CLASS_ID}}",
+    REGS_OpDescription = "{{DESCRIPTION}}",
+    REGS_Name        = "{{NAME}}",
+    REG_NoMotionBlurCtrls = true,
+    REG_NoBlendCtrls      = true,
+})
+
+function Create()
+    self.Input = self:AddInput("Input", "Input", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+    self.Amount = self:AddInput("{{SLIDER_LABEL}}", "Amount", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_MinScale = {{SLIDER_MIN}},
+        INP_MaxScale = {{SLIDER_MAX}},
+        INP_Default  = {{SLIDER_DEFAULT}},
+    })
+    self.Output = self:AddOutput("Output", "Output", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+end
+
+function Process(req)
+    local img = self.Input:GetValue(req)
+    local amount = self.Amount:GetValue(req).Value
+    local out = Image({IMG_Like = img})
+    out:ProcessPixels(0, 0, img.Width, img.Height, img,
+        function(p, x, y)
+            -- TODO: replace with real per-pixel maths.
+            p.R = p.R * amount
+            p.G = p.G * amount
+            p.B = p.B * amount
+            return p
+        end
+    )
+    self.Output:Set(req, out)
+end

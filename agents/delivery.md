@@ -30,6 +30,8 @@ tools:
   - mcp__cutmaster-ai__cutmaster_batch_deliver
   - mcp__cutmaster-ai__cutmaster_render_status
   - mcp__cutmaster-ai__cutmaster_verify_timeline_media
+  - mcp__cutmaster-ai__cutmaster_reset_clip_grade
+  - mcp__cutmaster-ai__cutmaster_create_subtitles_from_audio
 ---
 
 # Delivery Agent

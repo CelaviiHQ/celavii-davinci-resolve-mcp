@@ -1,0 +1,24 @@
+// Lift / Gamma / Gain DCTL — three sliders driving the standard ASC primary
+// grade math. Useful as a parameterised replacement for primary wheels.
+// CutMaster AI · v5 Wave 3 · template id: lift_gamma_gain
+
+DEFINE_UI_PARAMS(lift, Lift, DCTLUI_SLIDER_FLOAT, 0.0, -1.0, 1.0, 0.001)
+DEFINE_UI_PARAMS(gamma, Gamma, DCTLUI_SLIDER_FLOAT, 1.0, 0.1, 4.0, 0.001)
+DEFINE_UI_PARAMS(gain, Gain, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 4.0, 0.001)
+
+__DEVICE__ float apply_lgg(float c, float l, float g, float k)
+{
+    float v = (c + l * (1.0f - c));
+    v = v * k;
+    if (v <= 0.0f) return 0.0f;
+    return _powf(v, 1.0f / g);
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+    return make_float3(
+        apply_lgg(p_R, lift, gamma, gain),
+        apply_lgg(p_G, lift, gamma, gain),
+        apply_lgg(p_B, lift, gamma, gain)
+    );
+}

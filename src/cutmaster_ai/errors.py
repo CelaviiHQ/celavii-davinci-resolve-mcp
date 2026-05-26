@@ -48,8 +48,57 @@ class StudioRequired(ResolveError):
     """The feature requires DaVinci Resolve Studio."""
 
 
+class ResolveVersionTooOld(ResolveError):
+    """The required Resolve scripting method is missing on this Resolve build."""
+
+
 class RenderError(ResolveError):
     """A render operation failed."""
+
+
+# ---------------------------------------------------------------------------
+# Version + edition gates
+# ---------------------------------------------------------------------------
+
+
+def _parse_version(version: str) -> tuple[int, ...]:
+    """Parse a dotted version string like ``"20.2.2"`` into a tuple.
+
+    Non-numeric trailing fragments (e.g. build suffixes) are dropped.
+    """
+    parts: list[int] = []
+    for chunk in version.split("."):
+        digits = "".join(ch for ch in chunk if ch.isdigit())
+        if not digits:
+            break
+        parts.append(int(digits))
+    return tuple(parts) or (0,)
+
+
+def _requires_method(obj, method_name: str, min_version: str) -> None:
+    """Raise ``ResolveVersionTooOld`` if ``obj`` lacks ``method_name``.
+
+    Mirrors the version-gate pattern from
+    `samuelgursky/davinci-resolve-mcp/src/granular/common.py`. The accepted
+    shape is a dotted string (``"20.2.2"``) — matches samuel so docstrings
+    copy-paste cleanly — and the comparison is done as an integer tuple
+    internally for monotonic ordering.
+
+    The check is purely existential (``hasattr``); we don't introspect the
+    actual Resolve version because Resolve's scripting API doesn't expose
+    one reliably. The ``min_version`` argument is documentation that gets
+    surfaced to the caller when the method is absent.
+    """
+    if hasattr(obj, method_name) and callable(getattr(obj, method_name)):
+        return
+    _ = _parse_version(min_version)  # validate format eagerly
+    raise ResolveVersionTooOld(
+        f"{method_name}() is missing on this Resolve build — requires Resolve ≥{min_version}."
+    )
+
+
+# Studio-edition gate lives in ``resolve._require_studio(feature_name)`` —
+# Wave 2 wrappers import it from there. No second helper here.
 
 
 # ---------------------------------------------------------------------------

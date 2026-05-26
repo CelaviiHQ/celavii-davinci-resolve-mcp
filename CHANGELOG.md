@@ -7,6 +7,136 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-26
+
+v5 port — agent coverage catch-up across 12 clusters, shipped in 3 waves. 42
+new MCP tools + 9 templates + Phase 0 version/Studio gate helpers. Verified
+against Resolve 21.0.0b.20. See
+[`Implementation/cutmaster_ai/v5/proposal.md`](Implementation/cutmaster_ai/v5/proposal.md)
+and [`api_verification.md`](Implementation/cutmaster_ai/v5/api_verification.md).
+
+### Added — v5 Wave 1 · Coverage catch-up (verified against Resolve 21.0.0b.20)
+
+- **C10 project setters (`tools/project.py`)** — typed enum-normalising wrappers
+  around `project.SetSetting()`. 7 new tools, each verified against live
+  `GetSetting()` round-trip:
+  - `cutmaster_set_color_science_mode` — `davinciYRGB` / `davinciYRGBColorManaged`
+    / `acescct` / `acescc` (with `yrgb`, `managed` aliases).
+  - `cutmaster_set_color_space` — set any of input / timeline / output color
+    space + gammas in one call; pass only the fields you want to change.
+  - `cutmaster_set_timeline_format` — width / height / fps / pixel-aspect.
+  - `cutmaster_set_proxy_mode` — `off` / `prefer_camera_originals` /
+    `prefer_proxies`.
+  - `cutmaster_set_optimized_media_mode` — boolean toggle.
+  - `cutmaster_set_cache_mode` — `none` / `smart` / `user`.
+  - `cutmaster_set_superscale_settings` — 1× / 2× / 3× / 4× upscale factor.
+- **C11 Fairlight mix presets (`tools/fairlight.py`)** — Resolve **20.2.2+**,
+  version-gated via `_requires_method` so older builds get a clean error
+  instead of `'NoneType' object is not callable`. 2 new tools:
+  - `cutmaster_get_fairlight_presets` — lists installed presets via
+    `resolve.GetFairlightPresets()`.
+  - `cutmaster_apply_fairlight_preset` — applies a preset to the current
+    timeline via `project.ApplyFairlightPresetToCurrentTimeline(name)`.
+- **C12 per-clip grade reset (`tools/color.py`)** — `cutmaster_reset_clip_grade`
+  via `item.GetNodeGraph(layer_index).ResetAllGrades()`. Snapshots the
+  project before mutating; destructive-op hook matcher already covers it.
+- **Phase 0 helpers (`errors.py`)** — `ResolveVersionTooOld` exception and
+  `_requires_method(obj, name, min_version)` + `_parse_version()` helpers.
+- **Verification log** at `Implementation/cutmaster_ai/v5/api_verification.md`
+  — source of truth for every Resolve API surface v5 wraps, with Confirmed
+  / Rejected sections.
+
+### Deferred — v5 Wave 1
+
+- **C1 keyframes** is not part of this release. The official Resolve Developer
+  Scripting README documents only `Resolve.GetKeyframeMode()` /
+  `SetKeyframeMode()` (the global page-mode toggle); there is no documented
+  `AddKeyframe` / `DeleteKeyframe` / `GetKeyframes` on `TimelineItem`. Live
+  probe on Resolve 21.0.0b.20 confirmed those methods return `None`.
+  Revisit once Blackmagic publishes a documented keyframe-create surface
+  or a stable Resolve 21 reintroduces them. Full investigation logged in
+  `Implementation/cutmaster_ai/v5/api_verification.md`.
+
+### Added — v5 Wave 2 · Resolve-native AI ops (Studio only, verified on Resolve 21.0.0b.20)
+
+- **C5 Magic Mask (`tools/clip_ai.py`)** — 2 new tools:
+  - `cutmaster_create_magic_mask` — wraps `TimelineItem.CreateMagicMask(mode)`.
+    Mode enum: `"F"` (forward — default), `"B"` (backward), `"BI"`
+    (bidirectional). Friendly aliases `forward` / `backward` /
+    `bidirectional` accepted.
+  - `cutmaster_regenerate_magic_mask` — wraps `TimelineItem.RegenerateMagicMask()`.
+- **C6 Smart Reframe + Stabilize (`tools/clip_ai.py`)** — 2 new tools, both
+  zero-arg wrappers (the proposal's two-step `SetProperty + trigger`
+  assumption was wrong — Resolve does not expose stabilization/reframe
+  tuning via scripting). Compose with `cutmaster_set_timeline_format` to
+  drive the Smart Reframe target aspect.
+  - `cutmaster_smart_reframe` — wraps `TimelineItem.SmartReframe()`.
+  - `cutmaster_stabilize` — wraps `TimelineItem.Stabilize()`.
+- **C8 Native captions + scene cuts (`tools/timeline_native_ai.py`)** — 2 new
+  tools, both Studio-gated:
+  - `cutmaster_create_subtitles_from_audio` — wraps
+    `Timeline.CreateSubtitlesFromAudio({...})` with the documented
+    `autoCaptionSettings` dict. Friendly enums for 17 languages, 3 caption
+    presets (default / teletext / netflix), single / double line break,
+    chars-per-line override, gap. Resolves the underlying `resolve.AUTO_CAPTION_*`
+    constants at runtime so we don't hard-code numeric enum values.
+  - `cutmaster_detect_scene_cuts` — wraps `Timeline.DetectSceneCuts()`.
+    **Destructive** — snapshots the project first via
+    `snapshot_project(... label="pre_detect_scene_cuts")`. Destructive-op
+    hook matcher already covers it.
+- **C9 Native media-pool transcription (`tools/native_transcription.py`)** —
+  3 new tools, distinct from `intelligence/transcription.py`'s
+  Deepgram/Gemini path. Resolve's native transcription embeds the result
+  into clip metadata (visible in inspector + searchable via smart bins).
+  - `cutmaster_transcribe_clip(clip_name)` — wraps
+    `MediaPoolItem.TranscribeAudio()`.
+  - `cutmaster_clear_clip_transcription(clip_name)` — wraps
+    `MediaPoolItem.ClearTranscription()`.
+  - `cutmaster_transcribe_folder(folder_name="")` — bulk variant wrapping
+    `Folder.TranscribeAudio()`; recurses through nested folders.
+
+### Added — v5 Wave 3 · Authoring surfaces + Fusion safety (verified on Resolve 21.0.0b.20)
+
+- **C4 Fusion comp introspection (`tools/fusion_inspect.py`)** — 4 read-only
+  tools that let agents probe a comp's structure before mutating it:
+  - `cutmaster_fusion_boundary_report` — terse summary (tool counts, input/
+    output tools, render range). Wraps `Comp.GetToolList()` +
+    `Comp.GetAttrs()`.
+  - `cutmaster_fusion_probe_comp(cursor, limit)` — paginated full graph
+    snapshot for deep comps; opaque base64 cursor.
+  - `cutmaster_fusion_list_animated_inputs` — finds inputs with
+    expressions or modifier-tool connections.
+  - `cutmaster_fusion_check_render_safe` — boolean "is this comp safe to
+    render?" + reasons (no inputs / no outputs / empty comp).
+- **C2 Fuse plugin authoring (`tools/fuse_plugins.py`)** — 9 tools + 4
+  bundled `.fuse` templates (`pass_through`, `single_input_image_op`,
+  `dual_input_blend`, `time_modulator`). Write ops confined to the
+  user-level Fuses dir; traversal-safe path resolution. Source validator
+  catches missing `FuRegisterClass`, missing `Create()`/`Process()`,
+  unbalanced braces, and banned calls (`os.execute`, `io.popen`,
+  `loadfile`, `dofile`). Override `CUTMASTER_FUSE_DIR` for tests.
+- **C3 DCTL authoring (`tools/dctl.py`)** — 9 tools + 5 bundled `.dctl`
+  templates (`identity`, `lift_gamma_gain`, `single_axis_curve`,
+  `false_color`, `gamut_clip`). Same write-safety surface as C2.
+  Validator checks for `__DEVICE__`, `transform(...)`, `make_float3`,
+  balanced braces, no `system(` calls. `cutmaster_apply_dctl_to_node`
+  bridges to `Graph.SetLUT` with name-resolution across user + system
+  search paths.
+- **C7 Multicam — partial (`workflows/multicam.py`)** — 1 tool:
+  - `cutmaster_auto_sync_audio(clip_names, sync_mode, channel, ...)` —
+    wraps `MediaPool.AutoSyncAudio([items], {settings})` with friendly
+    sync-mode + channel enums (`auto` / `mix` / 1-based int). 4-key
+    settings dict built with runtime constant lookup.
+
+### Deferred — v5 Wave 3
+
+- **`cutmaster_setup_multicam_timeline`** — proposal called for a multicam-
+  timeline-creator wrapping `MediaPool.CreateMultiCamClipWithMediaItems`,
+  but that method is **not documented in the Resolve scripting README
+  and not callable on Resolve 21.0.0b.20** (live probe returned `None`).
+  Samuel's port calls it; ours can't ship it. Re-evaluate when Blackmagic
+  publishes a documented multicam-create method.
+
 ### Fixed
 
 - Shot-tag cache miss for cut-timeline items with non-zero in-points.

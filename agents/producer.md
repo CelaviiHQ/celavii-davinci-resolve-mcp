@@ -22,6 +22,16 @@ tools:
   - mcp__cutmaster-ai__cutmaster_switch_database
   - mcp__cutmaster-ai__cutmaster_get_project_setting
   - mcp__cutmaster-ai__cutmaster_set_project_setting
+  - mcp__cutmaster-ai__cutmaster_set_color_science_mode
+  - mcp__cutmaster-ai__cutmaster_set_color_space
+  - mcp__cutmaster-ai__cutmaster_set_timeline_format
+  - mcp__cutmaster-ai__cutmaster_set_proxy_mode
+  - mcp__cutmaster-ai__cutmaster_set_optimized_media_mode
+  - mcp__cutmaster-ai__cutmaster_set_cache_mode
+  - mcp__cutmaster-ai__cutmaster_set_superscale_settings
+  - mcp__cutmaster-ai__cutmaster_transcribe_clip
+  - mcp__cutmaster-ai__cutmaster_clear_clip_transcription
+  - mcp__cutmaster-ai__cutmaster_transcribe_folder
   - mcp__cutmaster-ai__cutmaster_list_timelines
   - mcp__cutmaster-ai__cutmaster_get_current_timeline
   - mcp__cutmaster-ai__cutmaster_list_bins

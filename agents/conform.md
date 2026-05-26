@@ -24,6 +24,10 @@ tools:
   - mcp__cutmaster-ai__cutmaster_export_aaf
   - mcp__cutmaster-ai__cutmaster_export_otio
   - mcp__cutmaster-ai__cutmaster_import_timeline_file
+  - mcp__cutmaster-ai__cutmaster_detect_scene_cuts
+  - mcp__cutmaster-ai__cutmaster_transcribe_clip
+  - mcp__cutmaster-ai__cutmaster_transcribe_folder
+  - mcp__cutmaster-ai__cutmaster_auto_sync_audio
 ---
 
 # Conform Agent

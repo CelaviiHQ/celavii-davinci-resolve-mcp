@@ -1,6 +1,6 @@
 """CutMaster AI: Maximum-control MCP server for DaVinci Resolve."""
 
-__version__ = "0.3.0"
+__version__ = "0.6.0"
 
 from .config import mcp  # noqa: F401 — re-export for entry points
 
@@ -27,6 +27,13 @@ from .tools import fairlight  # noqa: F401, E402
 from .tools import layout  # noqa: F401, E402
 from .tools import graph  # noqa: F401, E402
 from .tools import scripting  # noqa: F401, E402
+from .tools import clip_ai  # noqa: F401, E402 — v5 Wave 2 (Magic Mask, Smart Reframe, Stabilize)
+from .tools import timeline_native_ai  # noqa: F401, E402 — v5 Wave 2 (captions + scene cuts)
+from .tools import native_transcription  # noqa: F401, E402 — v5 Wave 2 (Resolve-native STT)
+from .tools import fusion_inspect  # noqa: F401, E402 — v5 Wave 3 (Fusion comp introspection)
+from .tools import fuse_plugins  # noqa: F401, E402 — v5 Wave 3 (Fuse plugin authoring)
+from .tools import dctl  # noqa: F401, E402 — v5 Wave 3 (DCTL authoring)
+from .workflows import multicam  # noqa: F401, E402 — v5 Wave 3 (audio sync)
 from .tools import interchange  # noqa: F401, E402
 from .workflows import ingest  # noqa: F401, E402
 from .workflows import assembly  # noqa: F401, E402
@@ -38,6 +45,7 @@ from .intelligence import vision  # noqa: F401, E402
 from .intelligence import color_assist  # noqa: F401, E402
 from .intelligence import timeline_critique  # noqa: F401, E402
 from .intelligence import story_critic  # noqa: F401, E402
+from .intelligence import transcription  # noqa: F401, E402
 from .cutmaster.media import frame_math  # noqa: F401, E402
 from .cutmaster.media import ffmpeg_audio  # noqa: F401, E402
 from .cutmaster.media import vfr  # noqa: F401, E402

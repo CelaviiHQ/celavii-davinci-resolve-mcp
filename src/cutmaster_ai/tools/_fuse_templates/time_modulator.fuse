@@ -1,0 +1,49 @@
+--[[
+Time-modulated image op — driven by the current Fusion time, useful
+for animated effects that don't need explicit keyframes. Reads
+`req:GetTime()` and modulates the output amount.
+
+CutMaster AI · v5 Wave 3 · template id: time_modulator
+]]
+
+FuRegisterClass("{{CLASS_ID}}", CT_Tool, {
+    REGS_Category    = "{{CATEGORY}}",
+    REGS_OpIconString = "{{CLASS_ID}}",
+    REGS_OpDescription = "{{DESCRIPTION}}",
+    REGS_Name        = "{{NAME}}",
+})
+
+function Create()
+    self.Input = self:AddInput("Input", "Input", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+    self.Frequency = self:AddInput("Frequency", "Frequency", {
+        LINKID_DataType = "Number",
+        INPID_InputControl = "SliderControl",
+        INP_MinScale = 0.0,
+        INP_MaxScale = 10.0,
+        INP_Default  = 1.0,
+    })
+    self.Output = self:AddOutput("Output", "Output", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+end
+
+function Process(req)
+    local img = self.Input:GetValue(req)
+    local freq = self.Frequency:GetValue(req).Value
+    local t = req:GetTime() or 0
+    local mod = 0.5 + 0.5 * math.sin(2 * math.pi * freq * t)
+    local out = Image({IMG_Like = img})
+    out:ProcessPixels(0, 0, img.Width, img.Height, img,
+        function(p, x, y)
+            p.R = p.R * mod
+            p.G = p.G * mod
+            p.B = p.B * mod
+            return p
+        end
+    )
+    self.Output:Set(req, out)
+end

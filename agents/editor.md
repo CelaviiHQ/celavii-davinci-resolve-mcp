@@ -45,6 +45,9 @@ tools:
   - mcp__cutmaster-ai__cutmaster_search_clips
   - mcp__cutmaster-ai__cutmaster_quick_assembly
   - mcp__cutmaster-ai__cutmaster_assembly_from_bin
+  - mcp__cutmaster-ai__cutmaster_smart_reframe
+  - mcp__cutmaster-ai__cutmaster_create_subtitles_from_audio
+  - mcp__cutmaster-ai__cutmaster_detect_scene_cuts
 ---
 
 # Editor Agent

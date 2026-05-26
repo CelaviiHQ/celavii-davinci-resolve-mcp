@@ -95,6 +95,15 @@ TOOL_MODULES = [
     "cutmaster_ai.cutmaster.analysis.audio_cues",
     "cutmaster_ai.cutmaster.analysis._sanitize",
     "cutmaster_ai.cutmaster.resolve_ops.track_picker",
+    "cutmaster_ai.cutmaster.analysis.shot_metadata_stamper",
+    "cutmaster_ai.intelligence.transcription",
+    "cutmaster_ai.tools.clip_ai",
+    "cutmaster_ai.tools.timeline_native_ai",
+    "cutmaster_ai.tools.native_transcription",
+    "cutmaster_ai.tools.fusion_inspect",
+    "cutmaster_ai.tools.fuse_plugins",
+    "cutmaster_ai.tools.dctl",
+    "cutmaster_ai.workflows.multicam",
 ]
 
 # Route modules aren't tool modules — the TOOL_MODULES guard doesn't cover

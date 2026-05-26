@@ -30,6 +30,22 @@ tools:
   - mcp__cutmaster-ai__cutmaster_insert_fusion_title
   - mcp__cutmaster-ai__cutmaster_create_fusion_clip
   - mcp__cutmaster-ai__cutmaster_execute_lua
+  - mcp__cutmaster-ai__cutmaster_create_magic_mask
+  - mcp__cutmaster-ai__cutmaster_regenerate_magic_mask
+  - mcp__cutmaster-ai__cutmaster_stabilize
+  - mcp__cutmaster-ai__cutmaster_fusion_boundary_report
+  - mcp__cutmaster-ai__cutmaster_fusion_probe_comp
+  - mcp__cutmaster-ai__cutmaster_fusion_list_animated_inputs
+  - mcp__cutmaster-ai__cutmaster_fusion_check_render_safe
+  - mcp__cutmaster-ai__cutmaster_list_fuses
+  - mcp__cutmaster-ai__cutmaster_read_fuse
+  - mcp__cutmaster-ai__cutmaster_validate_fuse_source
+  - mcp__cutmaster-ai__cutmaster_list_fuse_templates
+  - mcp__cutmaster-ai__cutmaster_render_fuse_template
+  - mcp__cutmaster-ai__cutmaster_install_fuse
+  - mcp__cutmaster-ai__cutmaster_remove_fuse
+  - mcp__cutmaster-ai__cutmaster_get_fuse_search_paths
+  - mcp__cutmaster-ai__cutmaster_refresh_fuses
 ---
 
 # VFX Agent

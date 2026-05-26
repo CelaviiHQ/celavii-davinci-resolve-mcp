@@ -1,0 +1,34 @@
+--[[
+Pass-through Fuse — minimal scaffolding. Single image input wired
+directly to its output. Useful as a starting point for new effects;
+edit `Process()` to do the work.
+
+CutMaster AI · v5 Wave 3 · template id: pass_through
+]]
+
+FuRegisterClass("{{CLASS_ID}}", CT_Tool, {
+    REGS_Category    = "{{CATEGORY}}",
+    REGS_OpIconString = "{{CLASS_ID}}",
+    REGS_OpDescription = "{{DESCRIPTION}}",
+    REGS_Name        = "{{NAME}}",
+    REG_NoMotionBlurCtrls = true,
+    REG_NoBlendCtrls      = true,
+    REG_Fuse_NoEdit       = false,
+    REG_Fuse_NoReload     = false,
+})
+
+function Create()
+    self.Input = self:AddInput("Input", "Input", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+    self.Output = self:AddOutput("Output", "Output", {
+        LINKID_DataType = "Image",
+        LINK_Main       = 1,
+    })
+end
+
+function Process(req)
+    local img = self.Input:GetValue(req)
+    self.Output:Set(req, img)
+end
